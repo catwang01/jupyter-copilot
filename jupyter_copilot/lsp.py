@@ -109,8 +109,7 @@ class LSPWrapper:
             # if exit code is 130, ctrl + c was pressed in terminal
             # printing will mess up the exit confirmation
             if self.process.returncode != 130:
-                self.logger.error(f"LSP server process has terminated. Exit code: {
-                    self.process.returncode}")
+                self.logger.error(f"LSP server process has terminated. Exit code: {self.process.returncode}")
                 self.logger.error("stderr output:")
 
             return self.process.returncode
@@ -183,6 +182,7 @@ class LSPWrapper:
                 content = self.process.stdout.read(content_length)
                 self._handle_received_payload(json.loads(content))
             except Exception as e:
+                self.logger.error(f"Failed to process {header=}")
                 self.logger.error(f"Error processing server output: {e}")
         
 
@@ -244,8 +244,7 @@ class LSPWrapper:
 
         # at this point if a response has not been received then result will not be set, so we throw an error
         if not result.is_set():
-            raise TimeoutError(f"Request timed out: method={
-                               method}, id={self.request_id}")
+            raise TimeoutError(f"Request timed out: method={method}, id={self.request_id}")
 
         if 'error' in response:
             raise Exception(response['error'])
