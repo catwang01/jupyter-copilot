@@ -22,11 +22,6 @@ export class GithubCopilotStatusWidget extends Widget
     this.node.classList.add('jp-mod-highlighted');
   }
 
-  /**
-   * Set the widget text content
-   *
-   * @param summary The text to display
-   */
   set status(value: GithubCopilotStatus) {
     console.log(`Status changes from ${this._status} to ${value}`)
     this._status = value;
@@ -60,6 +55,17 @@ export class GithubCopilotStatusWidget extends Widget
 
     // publish changes
     this._valueChanged.emit(value);
+  }
+
+  /**
+   * Change to new status. If the status is the same as the current status, nothing happens
+   *
+   * @param value The status to set
+   */
+  public changeToNewStatus(value: GithubCopilotStatus): void
+  {
+    if (this.status != value) 
+      this.status = value;
   }
 
   get status(): GithubCopilotStatus

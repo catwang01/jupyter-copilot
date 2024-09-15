@@ -57,12 +57,10 @@ class NotebookLSPClient {
   // Handle messages from the extension server
   private handleMessage(event: MessageEvent) {
     const data = JSON.parse(event.data);
+
     switch (data.type) {
       case 'sync_response':
-        if (this._statusBarWidget && this._statusBarWidget.status != OGithubCopilotStatus.SignedIn)
-        {
-          this._statusBarWidget.status = OGithubCopilotStatus.SignedIn;
-        }
+        this._statusBarWidget?.changeToNewStatus(OGithubCopilotStatus.SignedIn);
         break;
       case 'completion':
         const pendingCompletion = this.pendingCompletions.get(data.req_id);
@@ -70,27 +68,18 @@ class NotebookLSPClient {
           pendingCompletion.resolve(data.completions);
           this.pendingCompletions.delete(data.req_id);
         }
-        if (this._statusBarWidget && this._statusBarWidget.status != OGithubCopilotStatus.SignedIn)
-        {
-          this._statusBarWidget.status = OGithubCopilotStatus.SignedIn;
-        }
+        this._statusBarWidget?.changeToNewStatus(OGithubCopilotStatus.SignedIn);
         break;
       case 'connection_established':
         console.log('Copilot connected to extension server...');
         break;
       case 'not_signed_in':
         console.log("Copilot not signed in");
-        if (this._statusBarWidget && this._statusBarWidget.status != OGithubCopilotStatus.NotSignedIn)
-        {
-          this._statusBarWidget.status = OGithubCopilotStatus.NotSignedIn;
-        }
+        this._statusBarWidget?.changeToNewStatus(OGithubCopilotStatus.NotSignedIn);
         break;
       default:
         console.log('Unknown message type:', data);
-        if (this._statusBarWidget && this._statusBarWidget.status != OGithubCopilotStatus.Error)
-        {
-          this._statusBarWidget.status = OGithubCopilotStatus.Error;
-        }
+        this._statusBarWidget?.changeToNewStatus(OGithubCopilotStatus.Error);
     }
   }
 
