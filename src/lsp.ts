@@ -60,7 +60,6 @@ class NotebookLSPClient {
 
     switch (data.type) {
       case 'sync_response':
-        this._statusBarWidget?.changeToNewStatus(OGithubCopilotStatus.SignedIn);
         break;
       case 'completion':
         const pendingCompletion = this.pendingCompletions.get(data.req_id);
