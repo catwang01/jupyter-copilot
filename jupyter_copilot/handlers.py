@@ -229,7 +229,7 @@ class NotebookLSPHandler(WebSocketHandler):
 
                 # Add other message types as needed
             except Exception as e:
-                logging.error(f"Error processing message: {e}")
+                await self.handle_error(e)
             finally:
                 self.message_queue.task_done()
 
@@ -285,6 +285,19 @@ class NotebookLSPHandler(WebSocketHandler):
         if self.notebook_manager is None:
             raise Exception("Notebook manager not initialized")
         self.notebook_manager.delete_cell(data['cell_id'])
+
+    async def handle_error(self, error):
+        logging.error(f"Error processing message: {error}")
+        if self.notebook_manager is None:
+            raise Exception("Notebook manager not initialized")
+        errorStr = str(error)
+        # handle NotSignedIn
+        # {'code': 1000, 'message': 'Not authenticated: NotSignedIn'}
+        # the error message doesn't follow the json string format (using single quotes)
+        # we can't parse it as json and then compare code
+        # so here we use simple string comparison
+        if errorStr == "{'code': 1000, 'message': 'Not authenticated: NotSignedIn'}":
+            await self.send_message('not_signed_in', {"errorMessage": str(error)})
 
     async def send_message(self, msg_type, payload):
         message = json.dumps({'type': msg_type, **payload})
