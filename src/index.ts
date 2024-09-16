@@ -19,6 +19,8 @@ import {
 import { CodeEditor } from '@jupyterlab/codeeditor';
 import { LoginExecute, SignOutExecute } from './commands/authentication';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { IStatusBar } from '@jupyterlab/statusbar';
+import { GithubCopilotStatusWidget, OGithubCopilotStatus } from './components/statusWidget';
 
 let ENABLED_FLAG = true;
 let COMPLETION_BIND = 'Ctrl J';
@@ -121,14 +123,16 @@ const plugin: JupyterFrontEndPlugin<void> = {
     INotebookTracker,
     ICompletionProviderManager,
     ICommandPalette,
-    ISettingRegistry
+    ISettingRegistry,
   ],
+  optional: [IStatusBar],
   activate: (
     app: JupyterFrontEnd,
     notebookTracker: INotebookTracker,
     providerManager: ICompletionProviderManager,
     palette: ICommandPalette,
-    settingRegistry: ISettingRegistry
+    settingRegistry: ISettingRegistry,
+    statusBar: IStatusBar | null
   ) => {
     console.log('Jupyter Copilot Extension Activated');
 
@@ -195,6 +199,23 @@ const plugin: JupyterFrontEndPlugin<void> = {
       }
     );
 
+    // statusBar is null for jupyter notebook and not null for jupyter lab
+    let statusBarWidget: GithubCopilotStatusWidget | null = null;
+    if (statusBar) {
+      statusBarWidget = new GithubCopilotStatusWidget();
+      statusBarWidget.node.onclick = (e) => {
+        if (statusBarWidget!.status == OGithubCopilotStatus.SignedIn) {
+          SignOutExecute(app);
+        } else {
+          LoginExecute(app);
+        }
+      }
+      statusBar.registerStatusItem('githubCopilotStatus', {
+        item: statusBarWidget,
+        align: "right"
+      });
+    }
+
     const notebookClients = new Map<string, NotebookLSPClient>();
 
     const provider = new CopilotInlineProvider(notebookClients);
@@ -208,7 +229,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
       await notebook.context.ready;
 
       const wsURL = URLExt.join(serverSettings.wsUrl, 'jupyter-copilot', 'ws');
-      const client = new NotebookLSPClient(notebook.context.path, wsURL);
+      const client = new NotebookLSPClient(notebook.context.path, wsURL, statusBarWidget);
       notebookClients.set(notebook.id, client);
 
       notebook.sessionContext.ready.then(() => {

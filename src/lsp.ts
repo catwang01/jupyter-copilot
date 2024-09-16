@@ -5,6 +5,8 @@
     server when a cell is updated in the notebook frontend.
 */
 
+import { GithubCopilotStatusWidget, OGithubCopilotStatus } from "./components/statusWidget";
+
 interface Completion {
   displayText: string;
   docVersion: number;
@@ -24,10 +26,12 @@ class NotebookLSPClient {
     { resolve: (value: any) => void; reject: (reason?: any) => void }
   > = new Map();
   private wsUrl: string;
+  private _statusBarWidget: GithubCopilotStatusWidget | null;
 
-  constructor(notebookPath: string, wsUrl: string) {
+  constructor(notebookPath: string, wsUrl: string, statusBarWidget: GithubCopilotStatusWidget | null) {
     this.wsUrl = `${wsUrl}?path=${encodeURIComponent(notebookPath)}`;
     this.initializeWebSocket();
+    this._statusBarWidget = statusBarWidget;
   }
 
   private initializeWebSocket() {
@@ -53,6 +57,7 @@ class NotebookLSPClient {
   // Handle messages from the extension server
   private handleMessage(event: MessageEvent) {
     const data = JSON.parse(event.data);
+
     switch (data.type) {
       case 'sync_response':
         break;
@@ -62,12 +67,18 @@ class NotebookLSPClient {
           pendingCompletion.resolve(data.completions);
           this.pendingCompletions.delete(data.req_id);
         }
+        this._statusBarWidget?.changeToNewStatus(OGithubCopilotStatus.SignedIn);
         break;
       case 'connection_established':
         console.log('Copilot connected to extension server...');
         break;
+      case 'not_signed_in':
+        console.log("Copilot not signed in");
+        this._statusBarWidget?.changeToNewStatus(OGithubCopilotStatus.NotSignedIn);
+        break;
       default:
         console.log('Unknown message type:', data);
+        this._statusBarWidget?.changeToNewStatus(OGithubCopilotStatus.Error);
     }
   }
 
