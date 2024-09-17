@@ -27,21 +27,27 @@ export class GithubCopilotStatusWidget extends Widget
     this._status = value;
     const newIcon = document.createElement('span');
     let className: string = 'octicon--copilot-error-16';
+    let title: string = 'Github Copilot not signed in';
     switch (value)
     {
         case OGithubCopilotStatus.SignedIn:
             className = 'logos--github-copilot';
+            title = 'Github Copilot signed in';
             break;
         case OGithubCopilotStatus.NotSignedIn:
             className = 'octicon--copilot-error-16';
+            title = 'Github Copilot not signed in';
             break;
         case OGithubCopilotStatus.Error:
             className = 'octicon--copilot-warning-16';
+            title = 'Github Copilot runnning into error';
+            break;
         default:
             break;
     }
     newIcon.classList.add(className);
     newIcon.classList.add('github-copilot-status');
+    newIcon.title = title;
 
     if (this.node.children.length == 1)
     {
