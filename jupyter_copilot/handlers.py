@@ -229,7 +229,10 @@ class NotebookLSPHandler(WebSocketHandler):
 
                 # Add other message types as needed
             except Exception as e:
-                await self.handle_error(e)
+                try:
+                    await self.handle_error(e)
+                except Exception as anotherError:
+                    logging.error(f"Running into the following error when handling error: {anotherError}")
             finally:
                 self.message_queue.task_done()
 
