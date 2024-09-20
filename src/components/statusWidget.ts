@@ -19,7 +19,7 @@ export class GithubCopilotStatusWidget extends Widget
   constructor() {
     super();
     this.status = OGithubCopilotStatus.NotSignedIn;
-    this.node.classList.add('jp-mod-highlighted');
+    this.addClass('jp-mod-highlighted');
   }
 
   set status(value: GithubCopilotStatus) {
@@ -45,8 +45,7 @@ export class GithubCopilotStatusWidget extends Widget
         default:
             break;
     }
-    newIcon.classList.add(className);
-    newIcon.classList.add('github-copilot-status');
+    newIcon.classList.add(className, 'github-copilot-status');
     newIcon.title = title;
 
     if (this.node.children.length == 1)
