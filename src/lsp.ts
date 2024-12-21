@@ -49,8 +49,8 @@ class NotebookLSPClient {
     this.socket.onclose = this.handleSocketClose;
   }
 
-  private handleSocketClose = () => {
-    console.log('Socket connection closed, reconnecting...');
+  private handleSocketClose = (e) => {
+    console.log(`Socket connection closed due to error ${e}, reconnecting...`);
     this.initializeWebSocket();
   };
 
@@ -129,6 +129,7 @@ class NotebookLSPClient {
   }
 
   private sendMessage(type: string, payload: any) {
+    console.log(`Sending message to server: ${type} with the payload: ${JSON.stringify(payload)}`);
     this.socket?.send(JSON.stringify({ type, ...payload }));
   }
 

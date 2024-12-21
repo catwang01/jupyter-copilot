@@ -52,7 +52,10 @@ class NotebookManager:
 
         # when a notebook is newly created and never run this information is not available
         if nb.metadata and nb.metadata.kernelspec:
-            self.language = nb.metadata.kernelspec.language.lower()
+            try:
+                self.language = nb.metadata.kernelspec.language.lower()
+            except Exception as e:
+                logging.error(f"Error getting language from notebook metadata: {e}")
 
         lsp_client.send_notification("textDocument/didOpen", {
             "textDocument": {
@@ -120,15 +123,16 @@ class NotebookManager:
         then returns the response
         """
         line = self.__get_absolute_line_num(cell_id, line)
-        logging.debug(f"[Copilot] Requesting completion for cell {cell_id}, line {line}, character {character}")
-        response = lsp_client.send_request("getCompletions", {
+        payload = {
             "doc": {
                 "uri": f"file:///{self.path}",
                 "position": {"line": line, "character": character},
                 "version": self.document_version
             }
-        })
-
+        }
+        logging.info(f"[Copilot] Requesting completion for cell {cell_id}, line {line}, character {character}, payload is {payload}")
+        response = lsp_client.send_request("getCompletions", payload)
+        logging.info("[Copilot] Completion response: %s", response)
         return response
 
     def __get_absolute_line_num(self, cellId: int, line: int) -> int:
@@ -198,6 +202,7 @@ class NotebookLSPHandler(WebSocketHandler):
         logging.debug("[Copilot] WebSocket opened")
 
     async def on_message(self, message):
+        logging.info(f"Received a message from the frontend: {message}, the current queue size is {self.message_queue.qsize()}")
         try:
             data = json.loads(message)
             await self.message_queue.put(data)
@@ -210,6 +215,7 @@ class NotebookLSPHandler(WebSocketHandler):
         while True:
             try:
                 data = await self.message_queue.get()
+                logging.info("Processing a message from the frontend: %s", data)
                 if data['type'] == 'cell_update':
                     await self.handle_cell_update(data)
                 elif data['type'] == 'cell_add':
@@ -223,7 +229,7 @@ class NotebookLSPHandler(WebSocketHandler):
                 elif data['type'] == 'sync_request':
                     await self.handle_sync_request()
                 elif data['type'] == 'change_path':
-                    await self.handler_path_change(data);
+                    await self.handler_path_change(data)
                 elif data['type'] == 'set_language':
                     await self.handle_set_language(data)
 
@@ -305,9 +311,10 @@ class NotebookLSPHandler(WebSocketHandler):
     async def send_message(self, msg_type, payload):
         message = json.dumps({'type': msg_type, **payload})
         try:
+            logging.info(f"Sending message to the frontend: {message}")
             await self.write_message(message)
         except Exception as e:
-            logging.error(f"Error sending message: {e}")
+            logging.error(f"Error sending message to the frontend: {e}")
 
     def on_close(self):
         logging.debug("[Copilot] WebSocket closed")
@@ -330,7 +337,6 @@ class AuthHandler(JupyterHandler):
         else:
             self.set_status(404)
             res = {"error": "Invalid action"}
-
         self.finish(res)
         
 def setup_handlers(server_app):
