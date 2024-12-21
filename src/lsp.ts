@@ -49,7 +49,7 @@ class NotebookLSPClient {
     this.socket.onclose = this.handleSocketClose;
   }
 
-  private handleSocketClose = (e) => {
+  private handleSocketClose = (e: any) => {
     console.log(`Socket connection closed due to error ${e}, reconnecting...`);
     this.initializeWebSocket();
   };
