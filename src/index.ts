@@ -21,6 +21,8 @@ import { LoginExecute, SignOutExecute } from './commands/authentication';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { IStatusBar } from '@jupyterlab/statusbar';
 import { GithubCopilotStatusWidget, OGithubCopilotStatus } from './components/statusWidget';
+import { debounce } from 'lodash';
+
 
 let ENABLED_FLAG = true;
 let COMPLETION_BIND = 'Ctrl J';
@@ -246,13 +248,14 @@ const plugin: JupyterFrontEndPlugin<void> = {
       // run whenever a notebook cell updates
       // types are of ISharedCodeCell and CellChange
       // i cannot import them and i cannot find where they are supposed to be
-      const onCellUpdate = (update: any, change: any) => {
+
+      const onCellUpdate = debounce((update: any, change: any) => {
         // only change if it is a source change
         if (change.sourceChange) {
           const content = update.source;
           client.sendCellUpdate(notebook.content.activeCellIndex, content);
         }
-      };
+      }, 100);
 
       // keep the current cell so when can clean up whenever this changes
       let current_cell = notebook.content.activeCell;

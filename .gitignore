@@ -126,3 +126,5 @@ notebooks/*
 !jupyter_copilot/dist
 .venv
 *.ipynb
+
+.autoversion
