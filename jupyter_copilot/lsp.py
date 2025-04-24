@@ -184,7 +184,7 @@ class LSPWrapper:
                 content = self.process.stdout.read(content_length)
                 self._handle_received_payload(json.loads(content))
             except Exception as e:
-                self.logger.error(f"Error processing server output: {e}")
+                self.logger.error(f"Error processing server output: {e}, the content is {content!r}")
         
 
     def send_notification(self, method: str, params: dict):
@@ -198,6 +198,7 @@ class LSPWrapper:
 
         message = json.dumps({**data, "jsonrpc": "2.0"})
         content_length = len(message.encode('utf-8'))
+        self.logger.info(f"Sending message to LSP server: {message}")
         rpc_message = f"Content-Length: {content_length}\r\n\r\n{message}"
         try:
             if not self.process.stdin:
